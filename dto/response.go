@@ -2,16 +2,30 @@ package dto
 
 import "time"
 
-type Response[T any] struct {
+type ResponseMessage struct {
 	Timestamp time.Time `json:"timestamp"`
-	Message   string    `json:"message"`
+	Message   any       `json:"message,omitempty"`
+	Error     any       `json:"error,omitempty"`
+}
+
+type ResponseData[T any] struct {
+	Timestamp time.Time `json:"timestamp"`
+	Message   any       `json:"message,omitempty"`
+	Error     any       `json:"error,omitempty"`
 	Data      T         `json:"data"`
 }
 
-func NewResponseMessage(message string) Response[string] {
-	return Response[string]{Timestamp: time.Now(), Message: message}
+func NewResponseMessage(message any) ResponseMessage {
+	return ResponseMessage{
+		Timestamp: time.Now(),
+		Message:   message,
+	}
 }
 
-func NewResponseData[T any](data T) Response[T] {
-	return Response[T]{Timestamp: time.Now(), Message: "success", Data: data}
+func NewResponseData[T any](data T) ResponseData[T] {
+	return ResponseData[T]{
+		Timestamp: time.Now(),
+		Message:   "success",
+		Data:      data,
+	}
 }

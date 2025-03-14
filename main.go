@@ -14,9 +14,14 @@ import (
 func main() {
 	cnf := config.Get()
 
-	dbConnection := connection.GetDatabase(cnf.Database)
+	dbConnection, dbGorm := connection.GetDatabase(cnf.Database)
 
 	userRepository := repository.NewUser(dbConnection)
+	mediaRepository := repository.NewMediaRepositoryImpl(dbGorm)
+	mediaService := service.NewMediaService(mediaRepository, cnf)
+	bookRepository := repository.NewBookRepository(dbGorm)
+	bookService := service.NewBookService(bookRepository, mediaRepository, cnf)
+
 	authService := service.NewAuth(cnf, userRepository)
 
 	authHandler := middleware.Authenticate(authService)
@@ -24,6 +29,12 @@ func main() {
 	app := fiber.New()
 
 	api.NewAuth(app, authHandler, authService)
+	api.NewBookApi(app, authHandler, bookService)
+	api.NewMediaApi(app, authHandler, mediaService, cnf)
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
 
 	_ = app.Listen(cnf.Server.Host + ":" + cnf.Server.Port)
 }

@@ -2,15 +2,17 @@ package config
 
 import (
 	"flag"
-	"github.com/lpernett/godotenv"
 	"log"
 	"os"
+
+	"github.com/lpernett/godotenv"
 )
 
 type Config struct {
 	Server   Server
 	Database Database
 	Secret   Secret
+	File     File
 }
 
 type Server struct {
@@ -29,6 +31,12 @@ type Database struct {
 
 type Secret struct {
 	Jwt string
+}
+
+type File struct {
+	MaxUploadSize string
+	UploadPath    string
+	LinkCover     string
 }
 
 func Get() *Config {
@@ -61,6 +69,11 @@ func Get() *Config {
 		},
 		Secret: Secret{
 			Jwt: os.Getenv("SECRET_JWT"),
+		},
+		File: File{
+			MaxUploadSize: os.Getenv("MAX_UPLOAD_SIZE"),
+			LinkCover:     os.Getenv("LINK_COVER"),
+			UploadPath:    os.Getenv("UPLOAD_PATH"),
 		},
 	}
 }

@@ -25,3 +25,29 @@ func Authenticate(authService domain.AuthService) fiber.Handler {
 		return c.Next()
 	}
 }
+
+func RoleMiddleware(roles ...string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user := c.Locals("x-user").(map[string]interface{})
+
+		if user == nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(dto.NewResponseMessage("Unauthorized access"))
+		}
+
+		userRole := user["role"].(string)
+
+		isAllowed := false
+		for _, role := range roles {
+			if userRole == role {
+				isAllowed = true
+				break
+			}
+		}
+
+		if !isAllowed {
+			return c.Status(fiber.StatusForbidden).JSON(dto.NewResponseMessage("Unauthorized access"))
+		}
+
+		return c.Next()
+	}
+}
