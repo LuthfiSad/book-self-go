@@ -31,6 +31,15 @@ func (r *BookRepositoryImpl) FindByID(ctx context.Context, id uuid.UUID) (*domai
 	return &book, nil
 }
 
+func (r *BookRepositoryImpl) FindByCoverID(ctx context.Context, id uuid.UUID) ([]domain.Book, error) {
+	var books []domain.Book
+	err := r.db.WithContext(ctx).Preload("Cover").Where("cover_id = ?", id).Find(&books).Error
+	if err != nil {
+		return nil, err
+	}
+	return books, nil
+}
+
 func (r *BookRepositoryImpl) Create(ctx context.Context, book *domain.Book) error {
 	return r.db.WithContext(ctx).Create(book).Error
 }

@@ -52,6 +52,21 @@ func (s *bookService) GetBookByID(ctx context.Context, id uuid.UUID) (*dto.BookR
 	return &response, nil
 }
 
+func (s *bookService) GetBookByCoverID(ctx context.Context, id uuid.UUID) ([]dto.BookResponse, error) {
+	books, err := s.bookRepo.FindByCoverID(ctx, id)
+	if err != nil {
+		slog.ErrorContext(ctx, err.Error())
+		return nil, err
+	}
+
+	bookResponses := make([]dto.BookResponse, 0, len(books))
+	for _, book := range books {
+		bookResponses = append(bookResponses, s.toBookResponse(&book))
+	}
+
+	return bookResponses, nil
+}
+
 func (s *bookService) CreateBook(ctx context.Context, req dto.BookCreateRequest) (*dto.BookResponse, error) {
 	book := &domain.Book{
 		Title:       req.Title,
@@ -121,6 +136,24 @@ func (s *bookService) DeleteBook(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return s.bookRepo.Delete(ctx, id)
+}
+
+func (s *bookService) DeleteBookCover(ctx context.Context, id uuid.UUID) error {
+	book, err := s.bookRepo.FindByID(ctx, id)
+	if err != nil {
+		slog.ErrorContext(ctx, err.Error())
+		return err
+	}
+
+	if book.Cover == nil && book.CoverID == nil {
+		return errors.New("book cover not found")
+	}
+
+	book.Cover = nil
+	book.CoverID = nil
+	book.UpdatedAt = time.Now()
+
+	return s.bookRepo.Update(ctx, book)
 }
 
 func (s *bookService) toBookResponse(book *domain.Book) dto.BookResponse {

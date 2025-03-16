@@ -2,56 +2,79 @@ package middleware
 
 import (
 	"fmt"
+	"go-rest-api/dto"
 	"go-rest-api/internal/config"
+	"io"
+	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 func FileUploadMiddleware(cfg *config.Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Check if request is multipart/form-data
-		if !strings.Contains(c.Get("Content-Type"), "multipart/form-data") {
-			return c.Next()
+		contentType := c.Get("Content-Type")
+		if !strings.Contains(contentType, "multipart/form-data") {
+			return c.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("Content-Type must be multipart/form-data"))
 		}
 
-		// Get file from form
-		file, err := c.FormFile("file")
+		file, err := c.FormFile("image")
 		if err != nil {
-			// If no file is provided, just continue
-			if err == fiber.ErrUnprocessableEntity {
-				return c.Next()
-			}
-			return err
+			return c.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("File upload is required"))
 		}
 
 		maxUploadSize, err := strconv.ParseInt(cfg.File.MaxUploadSize, 10, 64)
 		if err != nil {
-			// handle error
+			return c.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("Invalid max upload size"))
 		}
 
 		if file.Size > maxUploadSize*1024*1024 {
-			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("File size exceeds limit of %d MB", maxUploadSize))
+			return c.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage(fmt.Sprintf("File size exceeds limit of %d MB", maxUploadSize)))
 		}
 
-		// Check file extension
-		ext := filepath.Ext(file.Filename)
+		ext := strings.ToLower(filepath.Ext(file.Filename))
 		allowedExts := map[string]bool{
 			".jpg":  true,
 			".jpeg": true,
 			".png":  true,
 			".gif":  true,
-			".pdf":  true,
 		}
 
 		if !allowedExts[strings.ToLower(ext)] {
-			return fiber.NewError(fiber.StatusBadRequest, "Invalid file type")
+			return c.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("Invalid file type. Allowed: jpg, jpeg, png, gif"))
 		}
 
-		// Add file to context locals
-		c.Locals("file", file)
+		uploadPath := cfg.File.UploadPath
+		if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage(fmt.Errorf("failed to create upload directory: %w", err)))
+		}
+
+		newFileName := uuid.New().String() + ext
+		filePath := filepath.Join(uploadPath, newFileName)
+
+		src, err := file.Open()
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage(fmt.Errorf("failed to open uploaded file: %w", err)))
+		}
+		defer src.Close()
+
+		dst, err := os.Create(filePath)
+		if err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage(fmt.Errorf("failed to create destination file: %w", err)))
+		}
+		defer dst.Close()
+
+		if _, err = io.Copy(dst, src); err != nil {
+			return c.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage(fmt.Errorf("failed to copy file: %w", err)))
+		}
+
+		c.Locals("fileName", cfg.File.LinkCover+"/"+newFileName)
+		c.Locals("filePath", filePath)
 
 		return c.Next()
 	}

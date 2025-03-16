@@ -1,8 +1,8 @@
 package domain
 
 import (
+	"context"
 	"go-rest-api/dto"
-	"mime/multipart"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +28,6 @@ type MediaRepository interface {
 type MediaService interface {
 	GetAllMedia() ([]dto.MediaResponse, error)
 	GetMediaByID(id uuid.UUID) (*dto.MediaResponse, error)
-	UploadMedia(file *multipart.FileHeader) (*dto.MediaResponse, error)
-	DeleteMedia(id uuid.UUID) error
+	UploadMedia(fileName string, filePath string) (*dto.MediaResponse, error)
+	DeleteMedia(ctx context.Context, id uuid.UUID) error
 }

@@ -28,6 +28,7 @@ func NewBookApi(app *fiber.App, authHandler fiber.Handler, bookService domain.Bo
 	bookGroup.Post("/", authHandler, ba.createBook)
 	bookGroup.Put("/:id", authHandler, ba.updateBook)
 	bookGroup.Delete("/:id", authHandler, ba.deleteBook)
+	bookGroup.Delete("/cover/:id", authHandler, ba.deleteBookCover)
 }
 
 func (ba *bookApi) getAllBooks(ctx *fiber.Ctx) error {
@@ -36,7 +37,7 @@ func (ba *bookApi) getAllBooks(ctx *fiber.Ctx) error {
 
 	books, err := ba.bookService.GetAllBooks(c)
 	if err != nil {
-		return ctx.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage("Failed to get books"))
+		return ctx.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage(err.Error()))
 	}
 
 	return ctx.Status(http.StatusOK).JSON(dto.NewResponseData(books))
@@ -54,6 +55,23 @@ func (ba *bookApi) getBookByID(ctx *fiber.Ctx) error {
 	book, err := ba.bookService.GetBookByID(c, id)
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dto.NewResponseMessage("Book not found"))
+	}
+
+	return ctx.Status(http.StatusOK).JSON(dto.NewResponseData(book))
+}
+
+func (ba *bookApi) getBookByCoverID(ctx *fiber.Ctx) error {
+	c, cancel := context.WithTimeout(ctx.Context(), 10*time.Second)
+	defer cancel()
+
+	id, err := uuid.Parse(ctx.Params("id"))
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("Invalid ID format"))
+	}
+
+	book, err := ba.bookService.GetBookByCoverID(c, id)
+	if err != nil {
+		return ctx.Status(http.StatusNotFound).JSON(dto.NewResponseMessage(err.Error()))
 	}
 
 	return ctx.Status(http.StatusOK).JSON(dto.NewResponseData(book))
@@ -117,4 +135,20 @@ func (ba *bookApi) deleteBook(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(http.StatusOK).JSON(dto.NewResponseMessage("Book deleted successfully"))
+}
+
+func (ba *bookApi) deleteBookCover(ctx *fiber.Ctx) error {
+	c, cancel := context.WithTimeout(ctx.Context(), 10*time.Second)
+	defer cancel()
+
+	id, err := uuid.Parse(ctx.Params("id"))
+	if err != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("Invalid ID format"))
+	}
+
+	if err := ba.bookService.DeleteBookCover(c, id); err != nil {
+		return ctx.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage(err.Error()))
+	}
+
+	return ctx.Status(http.StatusOK).JSON(dto.NewResponseMessage("Book cover deleted successfully"))
 }
