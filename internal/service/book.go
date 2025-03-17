@@ -7,6 +7,7 @@ import (
 	"go-rest-api/dto"
 	"go-rest-api/internal/config"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,8 +27,8 @@ func NewBookService(bookRepo domain.BookRepository, mediaRepo domain.MediaReposi
 	}
 }
 
-func (s *bookService) GetAllBooks(ctx context.Context) ([]dto.BookResponse, error) {
-	books, err := s.bookRepo.FindAll(ctx)
+func (s *bookService) GetBooks(ctx context.Context, page, perPage int, search string, cover_id *uuid.UUID) (*dto.PaginatedResponseData[[]dto.BookResponse], error) {
+	books, total, err := s.bookRepo.FindBooks(ctx, page, perPage, search, cover_id)
 	if err != nil {
 		slog.ErrorContext(ctx, err.Error())
 		return nil, err
@@ -38,7 +39,17 @@ func (s *bookService) GetAllBooks(ctx context.Context) ([]dto.BookResponse, erro
 		bookResponses = append(bookResponses, s.toBookResponse(&book))
 	}
 
-	return bookResponses, nil
+	totalPages := int(math.Ceil(float64(total) / float64(perPage)))
+
+	paginatedResponse := &dto.PaginatedResponseData[[]dto.BookResponse]{
+		Data:       bookResponses,
+		Page:       page,
+		PerPage:    perPage,
+		TotalPages: totalPages,
+		TotalItems: total,
+	}
+
+	return paginatedResponse, nil
 }
 
 func (s *bookService) GetBookByID(ctx context.Context, id uuid.UUID) (*dto.BookResponse, error) {
@@ -50,21 +61,6 @@ func (s *bookService) GetBookByID(ctx context.Context, id uuid.UUID) (*dto.BookR
 
 	response := s.toBookResponse(book)
 	return &response, nil
-}
-
-func (s *bookService) GetBookByCoverID(ctx context.Context, id uuid.UUID) ([]dto.BookResponse, error) {
-	books, err := s.bookRepo.FindByCoverID(ctx, id)
-	if err != nil {
-		slog.ErrorContext(ctx, err.Error())
-		return nil, err
-	}
-
-	bookResponses := make([]dto.BookResponse, 0, len(books))
-	for _, book := range books {
-		bookResponses = append(bookResponses, s.toBookResponse(&book))
-	}
-
-	return bookResponses, nil
 }
 
 func (s *bookService) CreateBook(ctx context.Context, req dto.BookCreateRequest) (*dto.BookResponse, error) {

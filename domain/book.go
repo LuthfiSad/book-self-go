@@ -23,18 +23,16 @@ type Book struct {
 }
 
 type BookRepository interface {
-	FindAll(ctx context.Context) ([]Book, error)
+	FindBooks(ctx context.Context, page, perPage int, search string, cover_id *uuid.UUID) ([]Book, int64, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*Book, error)
-	FindByCoverID(ctx context.Context, id uuid.UUID) ([]Book, error)
 	Create(ctx context.Context, book *Book) error
 	Update(ctx context.Context, book *Book) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type BookService interface {
-	GetAllBooks(ctx context.Context) ([]dto.BookResponse, error)
+	GetBooks(ctx context.Context, page, perPage int, search string, cover_id *uuid.UUID) (*dto.PaginatedResponseData[[]dto.BookResponse], error)
 	GetBookByID(ctx context.Context, id uuid.UUID) (*dto.BookResponse, error)
-	GetBookByCoverID(ctx context.Context, id uuid.UUID) ([]dto.BookResponse, error)
 	CreateBook(ctx context.Context, req dto.BookCreateRequest) (*dto.BookResponse, error)
 	UpdateBook(ctx context.Context, id uuid.UUID, req dto.BookUpdateRequest) (*dto.BookResponse, error)
 	DeleteBook(ctx context.Context, id uuid.UUID) error

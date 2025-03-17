@@ -6,6 +6,7 @@ import (
 	"go-rest-api/dto"
 	"go-rest-api/internal/utils"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,12 +36,24 @@ func (ba *bookApi) getAllBooks(ctx *fiber.Ctx) error {
 	c, cancel := context.WithTimeout(ctx.Context(), 10*time.Second)
 	defer cancel()
 
-	books, err := ba.bookService.GetAllBooks(c)
+	page, _ := strconv.Atoi(ctx.Query("page", "1"))
+	perPage, _ := strconv.Atoi(ctx.Query("perPage", "10"))
+	search := ctx.Query("search", "")
+	cover_id := uuid.Nil
+	if ctx.Query("cover_id") != "" {
+		var err error
+		cover_id, err = uuid.Parse(ctx.Query("cover_id"))
+		if err != nil {
+			return ctx.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("Invalid ID format"))
+		}
+	}
+
+	books, err := ba.bookService.GetBooks(c, page, perPage, search, &cover_id)
 	if err != nil {
 		return ctx.Status(http.StatusInternalServerError).JSON(dto.NewResponseMessage(err.Error()))
 	}
 
-	return ctx.Status(http.StatusOK).JSON(dto.NewResponseData(books))
+	return ctx.Status(http.StatusOK).JSON(dto.NewPaginatedResponseData(books.Data, books.Page, books.PerPage, books.TotalPages, books.TotalItems))
 }
 
 func (ba *bookApi) getBookByID(ctx *fiber.Ctx) error {
@@ -55,23 +68,6 @@ func (ba *bookApi) getBookByID(ctx *fiber.Ctx) error {
 	book, err := ba.bookService.GetBookByID(c, id)
 	if err != nil {
 		return ctx.Status(http.StatusNotFound).JSON(dto.NewResponseMessage("Book not found"))
-	}
-
-	return ctx.Status(http.StatusOK).JSON(dto.NewResponseData(book))
-}
-
-func (ba *bookApi) getBookByCoverID(ctx *fiber.Ctx) error {
-	c, cancel := context.WithTimeout(ctx.Context(), 10*time.Second)
-	defer cancel()
-
-	id, err := uuid.Parse(ctx.Params("id"))
-	if err != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(dto.NewResponseMessage("Invalid ID format"))
-	}
-
-	book, err := ba.bookService.GetBookByCoverID(c, id)
-	if err != nil {
-		return ctx.Status(http.StatusNotFound).JSON(dto.NewResponseMessage(err.Error()))
 	}
 
 	return ctx.Status(http.StatusOK).JSON(dto.NewResponseData(book))

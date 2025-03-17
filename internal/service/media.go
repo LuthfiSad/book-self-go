@@ -85,12 +85,12 @@ func (s *mediaService) DeleteMedia(ctx context.Context, id uuid.UUID) error {
 		return err
 	}
 
-	books, err := s.bookService.GetBookByCoverID(ctx, media.ID)
+	books, err := s.bookService.GetBooks(ctx, 1, 9999, "", &media.ID)
 	if err != nil {
 		return err
 	}
 
-	for _, book := range books {
+	for _, book := range books.Data {
 		err := s.bookService.DeleteBookCover(ctx, book.ID)
 		if err != nil {
 			return fmt.Errorf("failed to delete book cover for book ID %s: %w", book.ID, err)
