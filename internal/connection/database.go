@@ -42,7 +42,7 @@ func GetDatabase(conf config.Database) (*sql.DB, *gorm.DB) {
 }
 
 func autoMigrate(DB *gorm.DB) {
-	err := DB.AutoMigrate(&domain.User{}, &domain.Book{}, &domain.BookStock{}, &domain.Media{}, &domain.Journal{}, &domain.Charge{}, &domain.Customer{})
+	err := DB.AutoMigrate(&domain.User{}, &domain.Book{}, &domain.BookStock{}, &domain.Media{}, &domain.BookTransaction{}, &domain.Charge{}, &domain.Customer{})
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}

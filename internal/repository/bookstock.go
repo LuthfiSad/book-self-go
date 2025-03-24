@@ -41,7 +41,7 @@ func (r *BookstockRepositoryImpl) FindByBookID(bookID uuid.UUID) ([]domain.BookS
 func (r *BookstockRepositoryImpl) FindAvailableByBookID(bookID uuid.UUID) ([]domain.BookStock, error) {
 	var bookstocks []domain.BookStock
 	err := r.db.Preload("Book").Preload("Book.Cover").
-		Where("book_id = ? AND status = ?", bookID, constants.StatusAvailable).
+		Where("book_id = ? AND status = ?", bookID, constants.BookStockStatusAvailable).
 		Find(&bookstocks).Error
 	return bookstocks, err
 }

@@ -11,35 +11,35 @@ const (
 
 // BookStock status
 const (
-	StatusAvailable = "AVAILABLE"
-	StatusBorrowed  = "BORROWED"
-	StatusDamaged   = "DAMAGED"
-	StatusLost      = "LOST"
+	BookStockStatusAvailable = "AVAILABLE"
+	BookStockStatusBorrowed  = "BORROWED"
+	BookStockStatusDamaged   = "DAMAGED"
+	BookStockStatusLost      = "LOST"
 )
 
-// Journal status
+// BookTransaction status
 const (
-	StatusActive   = "BORROWED"
-	StatusReturned = "RETURNED"
-	StatusOverdue  = "OVERDUE"
+	BookTransactionStatusAvailable = "AVAILABLE"
+	BookTransactionStatusBorrowed  = "BORROWED"
+	BookTransactionStatusOverdue   = "OVERDUE"
 )
 
 // Error messages
 var (
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrUserNotFound       = errors.New("user not found")
-	ErrCustomerNotFound   = errors.New("customer not found")
-	ErrBookNotFound       = errors.New("book not found")
-	ErrBookstockNotFound  = errors.New("book stock not found")
-	ErrJournalNotFound    = errors.New("journal not found")
-	ErrMediaNotFound      = errors.New("media not found")
-	ErrChargeNotFound     = errors.New("charge not found")
-	ErrBookNotAvailable   = errors.New("book is not available")
-	ErrInternalServer     = errors.New("internal server error")
-	ErrUnauthorized       = errors.New("unauthorized access")
-	ErrForbidden          = errors.New("forbidden access")
-	ErrEmailAlreadyExists = errors.New("email already exists")
-	ErrInvalidCredential  = errors.New("invalid credential")
+	ErrInvalidCredentials      = errors.New("invalid email or password")
+	ErrUserNotFound            = errors.New("user not found")
+	ErrCustomerNotFound        = errors.New("customer not found")
+	ErrBookNotFound            = errors.New("book not found")
+	ErrBookstockNotFound       = errors.New("book stock not found")
+	ErrBookTransactionNotFound = errors.New("book_transaction not found")
+	ErrMediaNotFound           = errors.New("media not found")
+	ErrChargeNotFound          = errors.New("charge not found")
+	ErrBookNotAvailable        = errors.New("book is not available")
+	ErrInternalServer          = errors.New("internal server error")
+	ErrUnauthorized            = errors.New("unauthorized access")
+	ErrForbidden               = errors.New("forbidden access")
+	ErrEmailAlreadyExists      = errors.New("email already exists")
+	ErrInvalidCredential       = errors.New("invalid credential")
 )
 
 // Success messages
